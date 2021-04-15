@@ -4,8 +4,18 @@
 ### Functions
 The functions that are implemented up to now are as follows:
 
+
+
 ##### `getMapillaryUserFromUsername`
 Receives a Mapillary username and returns user information
+
+##### `getUserKey`
+
+##### `getUserSequences`
+
+##### `saveSequencesToFile`
+
+##### `handleErrorStatusCodes`
 
 TBC
 
