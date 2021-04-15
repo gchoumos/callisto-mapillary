@@ -59,10 +59,10 @@ def getUserKey(username):
         getMapillaryUserFromUsername(username)
     return USERS[username]['key']
 
-username = 'dandrimont'
-test_user = getMapillaryUserFromUsername(username)
+username = 'gchoumos'
+getMapillaryUserFromUsername(username)
 print("Result for user {0}:".format(username))
-pprint(test_user)
+pprint(USERS[username])
 
 test_user_key = getUserKey(username)
 print("user key: {0}".format(test_user_key))
