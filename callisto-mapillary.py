@@ -57,6 +57,8 @@ def getMapillaryUserFromUsername(username):
 
     # add user details to the USERS dictionary
     USERS[username] = user.json()[0]
+    # initialise SEQUENCES for user
+    SEQUENCES[username] = {}
 
 
 #
@@ -142,8 +144,59 @@ def getUserSequences(username,s_format='json'):
         return 1
 
     # Add the retrieved sequences to the dictionary to make them available for processing
-    SEQUENCES[username][s_format] = seqs.json()[0]
+    if s_format == 'json':
+        SEQUENCES[username][s_format] = seqs.json()
+    elif s_format == 'gpx':
+        SEQUENCES[username][s_format] = seqs.text
     return 0
+
+
+#
+# Save sequences to file
+# ----------------------
+# Will save the sequences of a user to a file.
+# The file will in the format provided as an argument and it can be any of the following:
+# - json (default)
+# - gpx
+#
+# The filename will be of the format
+#   <username>_sequences.<format>
+# where <username> is the mapillary username and <format> is the format provided.
+#
+# Arguments
+# ---------
+#    username - The username of the Mapillary user for which we want to save the sequences to a file
+#    s_format - The format of the output file. Can be either 'json' (default) or 'gpx'. Note
+#               that the json version includes a lot more information than the gpx which
+#               only includes coordinates of the sequence. For more details see the mapillary
+#               documentation.
+#               When s_format is 'gpx', the response format is actually xml-like
+#
+# Returns
+# -------
+#    0 - Success
+#    1 - Error
+#
+def saveSequencesToFile(username,s_format='json'):
+    if ',' in username:
+        print("List of usernames given as input. Will use the first one only.")
+        username = username.split(',')[0]
+
+    # Call the getUserSequences function to make sure that the sequences are available
+    # in the SEQUENCES dictionary. If they are not, the relevant calls to the Mapillary
+    # API will be triggered automaticaly.
+    resp = getUserSequences(username, s_format=s_format)
+    if resp == 1:
+        print("There was an error during the retrieval of the User Sequences. Exiting ...")
+
+    if s_format == 'json':
+        with open('{0}_sequences.json'.format(username), 'w') as outfile:
+            json.dump(SEQUENCES[username]['json'], outfile)
+    elif s_format == 'gpx':
+        with open('{0}_sequences.gpx'.format(username), 'w') as outfile:
+            json.dump(SEQUENCES[username]['gpx'], outfile)
+    else:
+        print("Unsupported File format")
 
 
 
@@ -158,5 +211,9 @@ test_user_key = getUserKey(username)
 print("user key: {0}".format(test_user_key))
 
 # sequences test
-getUserSequences(username='dandrimont',s_format='gpx')
+getUserSequences(username='gchoumos',s_format='gpx')
 print(SEQUENCES)
+
+# sequences to (json) file test
+saveSequencesToFile('gchoumos',s_format='json')
+saveSequencesToFile('gchoumos',s_format='gpx')
