@@ -199,9 +199,70 @@ def saveSequencesToFile(username,s_format='json'):
         print("Unsupported File format")
 
 
+#
+# Merge User Sequences
+# --------------------
+# This function merges a set of user sequences into one
+#
+# Arguments
+# ---------
+# - username: username of the user whose sequences we want to merge
+#
+# Returns
+# -------
+# - status_code: 0 for Success / 1 for Failure
+# - a dictionary with the merged user sequences
+#
+def mergeUserSequences(username):
+    if ',' in username:
+        print("List of usernames given as input. Will use the first one only.")
+        username = username.split(',')[0]
+
+    if username not in SEQUENCES:
+        print("Sequences of user {0} don't exist. Fetching ...".format(username))
+        if getUserSequences(username,s_format='json') == 1:
+            return 1, {}
+
+    # initialise an empty "merged" dictionary with only the info we want to initially keep
+    merged = {
+        'image_keys': [],
+        'coordinates': [],
+    }
+
+    # Iterate through the sequences and merge them into 1, keeping image keys and coordinates
+    # in the correct order.
+    # pdb.set_trace()
+    i = 1
+    for seq in SEQUENCES[username]['json']['features']:
+        len_image_keys = len(seq['properties']['coordinateProperties']['image_keys'])
+        len_coordinates = len(seq['geometry']['coordinates'])
+        if len_image_keys != len_coordinates :
+            print("iter {0}: WARNING: Length of image key list({1}) not equal to the length of coordinate list ({2})"
+                .format(i,len_image_keys,len_coordinates))
+
+            #
+            #  Fixing a mapillary bug when a sequence only has 1 image_key but 2 identical coordinate pairs
+            #
+            if len_image_keys == 1 and len_coordinates == 2 \
+                and seq['geometry']['coordinates'][0] == seq['geometry']['coordinates'][1]:
+                # keep only the first pair
+                seq['geometry']['coordinates'] = [seq['geometry']['coordinates'][0]]
+            else:
+                print("Merging is not possible because of inconsistency between # of images and # of coordinate pairs ...")
+                return 1, {}
+
+        merged['image_keys'] += seq['properties']['coordinateProperties']['image_keys']
+        merged['coordinates'] += seq['geometry']['coordinates']
+        i +=1
+
+    return 0, merged
+
+
+
 
 # user search test
-username = 'gchoumos'
+username = 'dandrimont'
+
 getMapillaryUserFromUsername(username)
 print("Result for user {0}:".format(username))
 pprint(USERS[username])
@@ -211,9 +272,13 @@ test_user_key = getUserKey(username)
 print("user key: {0}".format(test_user_key))
 
 # sequences test
-getUserSequences(username='gchoumos',s_format='gpx')
+getUserSequences(username=username,s_format='gpx')
 print(SEQUENCES)
 
 # sequences to (json) file test
-saveSequencesToFile('gchoumos',s_format='json')
-saveSequencesToFile('gchoumos',s_format='gpx')
+saveSequencesToFile(username,s_format='json')
+saveSequencesToFile(username,s_format='gpx')
+
+# test merging the user sequences
+_, merged = mergeUserSequences(username)
+
