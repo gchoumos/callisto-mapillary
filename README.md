@@ -19,5 +19,7 @@ Receives a Mapillary username and returns user information
 
 ##### `mergeUserSequences`
 
+##### `downloadImagesFromImageKeys`
+
 TBC
 

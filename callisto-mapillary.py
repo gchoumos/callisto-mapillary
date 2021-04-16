@@ -3,6 +3,8 @@ from pprint import pprint
 
 import json
 import requests
+import pdb
+import os
 
 # Let's keep data to dictionaries so that we avoid making multiple calls to the Mapillary API.
 USERS = {}
@@ -260,6 +262,39 @@ def mergeUserSequences(username):
     return 0, merged
 
 
+#
+# Download images using image keys
+# --------------------------------
+# The purpose of this function is to download a set of images that correspond to a set of image keys.
+# Will currently work for the publicly available images only.
+# The images will be downloaded inside the ./downloaded_images directory which will be created if it
+# doesn't already exist
+#
+# Arguments
+# ---------
+# - image_keys: keys of the images to download
+#
+# Returns
+# -------
+# - status_code: 0 for Success / 1 for Failure
+#
+def downloadImagesFromImageKeys(image_keys=[]):
+    if len(image_keys) == 0:
+        print("No image keys provided for download. Returning without any further action.")
+        return 0
+
+    # Create the downloaded_images directory if it doesn't already exist
+    if not os.path.exists('./downloaded_images'):
+        os.makedirs('./downloaded_images')
+
+    for key in image_keys:
+        if not os.path.exists('./downloaded_images/{0}_{1}'.format(key,'thumb-320.jpg')):
+            image = requests.get('{0}/{1}/{2}'.format(SETTINGS['image_base_url'],key,'thumb-320.jpg'))
+            file = open("./downloaded_images/{0}_{1}".format(key,'thumb-320.jpg'),"wb")
+            file.write(image.content)
+            file.close()
+        else:
+            print("Image with key {0} already exists".format(key))
 
 
 # user search test
@@ -284,4 +319,7 @@ saveSequencesToFile(username,s_format='json')
 
 # test merging the user sequences
 _, merged = mergeUserSequences(username)
+
+# test downloading images
+downloadImagesFromImageKeys(merged['image_keys'][:5])
 

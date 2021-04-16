@@ -15,6 +15,7 @@ SETTINGS = {
     'users_api_url': 'users',
     'sequences_api_url': 'sequences',
     'client_id': 'ReplaceWithYourApplicationClientID',
+    'image_base_url': 'https://images.mapillary.com',
 }
 
 # Try to import the redacted settings, if they exist
