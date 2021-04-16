@@ -108,7 +108,7 @@ def getUserKey(username):
 #    0 - Success
 #    1 - Error
 #
-def getUserSequences(username,s_format='json'):
+def getUserSequences(username,s_format='json',start_date='1990-01-01',end_date='2099-12-31'):
     if ',' in username:
         print("List of usernames given as input. Will use the first one only.")
         username = username.split(',')[0]
@@ -130,11 +130,13 @@ def getUserSequences(username,s_format='json'):
         # We don't have to specify anything in particular for the json format
         r_headers = {}
 
-    seqs = requests.get('{0}/{1}?userkeys={2}&client_id={3}&per_page=1000'.format(
+    seqs = requests.get('{0}/{1}?userkeys={2}&client_id={3}&per_page=1000&start_time={4}&end_time={5}'.format(
         SETTINGS['base_api_url'],
         SETTINGS['sequences_api_url'],
         USERS[username]['key'],
-        SETTINGS['client_id']),
+        SETTINGS['client_id'],
+        start_date,
+        end_date),
         headers=r_headers
     )
 
@@ -272,12 +274,13 @@ test_user_key = getUserKey(username)
 print("user key: {0}".format(test_user_key))
 
 # sequences test
-getUserSequences(username=username,s_format='gpx')
-print(SEQUENCES)
+getUserSequences(username=username,s_format='json',start_date='2018-01-01',end_date='2018-12-31')
+# print(SEQUENCES)
 
 # sequences to (json) file test
 saveSequencesToFile(username,s_format='json')
-saveSequencesToFile(username,s_format='gpx')
+# saveSequencesToFile(username,s_format='gpx')
+
 
 # test merging the user sequences
 _, merged = mergeUserSequences(username)

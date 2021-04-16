@@ -17,5 +17,7 @@ Receives a Mapillary username and returns user information
 
 ##### `handleErrorStatusCodes`
 
+##### `mergeUserSequences`
+
 TBC
 
