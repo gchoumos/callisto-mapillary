@@ -3,6 +3,7 @@ from pprint import pprint
 
 import json
 import requests
+import logging
 import pdb
 import os
 
@@ -10,6 +11,13 @@ import os
 USERS = {}
 SEQUENCES = {}
 
+# Initialise logging details
+logging.basicConfig(
+    filename='output.log',
+    format='%(asctime)s - %(message)s',
+    datefmt='%m/%d/%Y %I:%M:%S',
+    level=logging.INFO
+)
 
 #
 # Handle common error status codes of requests to the Mapillary API
@@ -39,11 +47,11 @@ def handleErrorStatusCodes(status_code):
 #
 def getMapillaryUserFromUsername(username):
     if ',' in username:
-        print("List of usernames given as input. Will retrieve the first one only.")
+        logging.info("List of usernames given as input. Will retrieve the first one only.")
         username = username.split(',')[0]
     # If we already have the user information, we don't have to make a new call
     if username in USERS:
-        print("Details of user {0} already available. No need for an api call.")
+        logging.info("Details of user {0} already available. No need for an api call.".format(username))
         return 0
     # Issue a get request to search for the user.
     user = requests.get('{0}/{1}?client_id={2}&usernames={3}'.format(
@@ -77,13 +85,13 @@ def getMapillaryUserFromUsername(username):
 #
 def getUserKey(username):
     if ',' in username:
-        print("List of usernames given as input. Will use the first one only.")
+        logging.info("List of usernames given as input. Will use the first one only.")
         username = username.split(',')[0]
     if username in USERS:
-        print("User details for {0} already exist. Fetching key.".format(username))
+        logging.info("User details for {0} already exist. Fetching key.".format(username))
         return USERS[username]['key']
     else:
-        print("User details for {0} not available. Issuing a Mapillary API call ...".format(username))
+        logging.info("User details for {0} not available. Issuing a Mapillary API call ...".format(username))
         fetch_user = getMapillaryUserFromUsername(username)
         if fetch_user == 0:
             return USERS[username]['key']
@@ -112,18 +120,18 @@ def getUserKey(username):
 #
 def getUserSequences(username,s_format='json',start_date='1990-01-01',end_date='2099-12-31'):
     if ',' in username:
-        print("List of usernames given as input. Will use the first one only.")
+        logging.info("List of usernames given as input. Will use the first one only.")
         username = username.split(',')[0]
     if s_format not in ['json','gpx']:
         print("Format provided is not a valid one - Returning ...")
         return 1
     # If user doesn't exist in the USERNAMES, we have to actuallly fetch that user details
     if username not in USERS:
-        print("User {0} details don't exist. Fetching ...".format(username))
+        logging.info("User {0} details don't exist. Fetching ...".format(username))
         if getMapillaryUserFromUsername(username) == 1:
             return 1
     if username in SEQUENCES and s_format in SEQUENCES[username]:
-        print("Sequences in {0} format already exist for {1}".format(s_format,username))
+        logging.info("Sequences in {0} format already exist for {1}".format(s_format,username))
         return 0
     # Issue a request to fetch the user sequences in the specified format
     if s_format == 'gpx':
@@ -183,7 +191,7 @@ def getUserSequences(username,s_format='json',start_date='1990-01-01',end_date='
 #
 def saveSequencesToFile(username,s_format='json'):
     if ',' in username:
-        print("List of usernames given as input. Will use the first one only.")
+        logging.info("List of usernames given as input. Will use the first one only.")
         username = username.split(',')[0]
 
     # Call the getUserSequences function to make sure that the sequences are available
@@ -191,7 +199,7 @@ def saveSequencesToFile(username,s_format='json'):
     # API will be triggered automaticaly.
     resp = getUserSequences(username, s_format=s_format)
     if resp == 1:
-        print("There was an error during the retrieval of the User Sequences. Exiting ...")
+        logging.info("There was an error during the retrieval of the User Sequences. Exiting ...")
 
     if s_format == 'json':
         with open('{0}_sequences.json'.format(username), 'w') as outfile:
@@ -219,11 +227,11 @@ def saveSequencesToFile(username,s_format='json'):
 #
 def mergeUserSequences(username):
     if ',' in username:
-        print("List of usernames given as input. Will use the first one only.")
+        logging.info("List of usernames given as input. Will use the first one only.")
         username = username.split(',')[0]
 
     if username not in SEQUENCES:
-        print("Sequences of user {0} don't exist. Fetching ...".format(username))
+        logging.info("Sequences of user {0} don't exist. Fetching ...".format(username))
         if getUserSequences(username,s_format='json') == 1:
             return 1, {}
 
@@ -241,7 +249,7 @@ def mergeUserSequences(username):
         len_image_keys = len(seq['properties']['coordinateProperties']['image_keys'])
         len_coordinates = len(seq['geometry']['coordinates'])
         if len_image_keys != len_coordinates :
-            print("iter {0}: WARNING: Length of image key list({1}) not equal to the length of coordinate list ({2})"
+            logging.warning("iter {0}: WARNING: Length of image key list({1}) not equal to the length of coordinate list ({2})"
                 .format(i,len_image_keys,len_coordinates))
 
             #
@@ -252,7 +260,7 @@ def mergeUserSequences(username):
                 # keep only the first pair
                 seq['geometry']['coordinates'] = [seq['geometry']['coordinates'][0]]
             else:
-                print("Merging is not possible because of inconsistency between # of images and # of coordinate pairs ...")
+                logging.error("Merging is not possible because of inconsistency between # of images and # of coordinate pairs ...")
                 return 1, {}
 
         merged['image_keys'] += seq['properties']['coordinateProperties']['image_keys']
@@ -280,7 +288,7 @@ def mergeUserSequences(username):
 #
 def downloadImagesFromImageKeys(image_keys=[]):
     if len(image_keys) == 0:
-        print("No image keys provided for download. Returning without any further action.")
+        logging.info("No image keys provided for download. Returning without any further action.")
         return 0
 
     # Create the downloaded_images directory if it doesn't already exist
@@ -294,4 +302,4 @@ def downloadImagesFromImageKeys(image_keys=[]):
             file.write(image.content)
             file.close()
         else:
-            print("Image with key {0} already exists".format(key))
+            logging.info("Image with key {0} already exists".format(key))
